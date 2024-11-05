@@ -22,19 +22,19 @@ func main() {
 		mess, err := reader.ReadString('\n')
 		if (err!=nil) {
 			fmt.Println("Error reading the task from the server")
-			continue
+			return
 		}
 
 		trimed := strings.TrimSpace(mess)
 		parsed, err := strconv.Atoi(trimed)
 		if (err!=nil) {
-			fmt.Println("Error converting string to int")
+			fmt.Println("Error converting string to int", "\"" + trimed +"\"")
 			continue
 		}
 		result := parsed * parsed
 
-		time.Sleep(time.Duration(5)*time.Second)
+		time.Sleep(5*time.Second)
 		
-		fmt.Fprintf(conn, "square of %d is %d", parsed, result)
+		fmt.Fprintf(conn, "square of %d is %d\n", parsed, result)
 	}
 }

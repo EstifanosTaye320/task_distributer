@@ -3,44 +3,33 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math/rand/v2"
+	"math/rand"
 	"net"
-	"sync"
+	"strings"
 	"time"
 )
 
-var lstClients = make(map[net.Conn]bool)
-var mu sync.Mutex
-
-func readAndWrite(conn net.Conn) {
+func dispatchTask(conn net.Conn) {
+	defer func (){
+		conn.Close()
+	}()
+	
 	reader := bufio.NewReader(conn)
-
 	for {
+		randNum := rand.Intn(100)
+
+		fmt.Fprintln(conn, randNum)
+		
 		responce, err := reader.ReadString('\n')
 		if (err!=nil) {
 			fmt.Println("Error reading the responce from the client", err)
-			continue
+			return
 		}
+		responce = strings.TrimSpace(responce)
 
 		fmt.Println(responce)
-	}
-} 
 
-func dispatchTask(conn net.Conn) {
-	defer func (){
-		mu.Lock()
-		delete(lstClients, conn)
-		mu.Unlock()
-		conn.Close()
-	}()
-
-	go readAndWrite(conn)
-
-	for {
-		randNum := rand.IntN(100)
-		fmt.Fprintln(conn, randNum)
-
-		time.Sleep(time.Duration(2)*time.Second)
+		time.Sleep(2*time.Second)
 	}
 }
 
@@ -51,6 +40,7 @@ func main() {
 		return
 	}
 	defer listener.Close()
+	fmt.Println("Server running on port 8080...")
 
 	for {
 		conn, err := listener.Accept()
@@ -58,10 +48,6 @@ func main() {
 			fmt.Println("Error during the tcp handshake", err)
 			continue
 		}
-
-		mu.Lock()
-		lstClients[conn] = true
-		mu.Unlock()
 		
 		go dispatchTask(conn)
 	}
